@@ -14,6 +14,7 @@ $outputcreate = awslocal lambda create-function `
   --zip-file fileb://function.zip `
   --role arn:aws:iam::000000000000:role/lambda-role `
   --timeout 600 `
+  --environment "Variables={AWS_USE_PATH_STYLE=true,AWS_ENDPOINT_URL=http://host.docker.internal:4566}" `
   --region us-east-1;$output = awslocal lambda invoke --function-name test-go-lambda --cli-binary-format raw-in-base64-out --payload file://payload.json output.txt; Get-Content output.txt
 
 

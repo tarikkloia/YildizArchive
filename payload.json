@@ -1,5 +1,5 @@
 {
-  "parallel": 5,
+  "parallel": 10,
   "sqlFile": "order_archive_daily.sql",
   "logPrefix": "order_archive_daily",
   "sqlBucket": {
@@ -10,12 +10,14 @@
   },
   "slack": {
     "url": "https://hooks.slack.com/services/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",
-    "channel": "test"
+    "channel": "new-channel"
   },
   "connection": {
-    "host": "host.docker.internal",
-    "databaseName": "destination_db",
-    "password": "1"
+    "host": "/ceptesok/fulfillment/qa/aurora_postgres/cluster_endpoint",
+    "port": "/ceptesok/fulfillment/qa/aurora_postgres/cluster_port",
+    "user": "/ceptesok/fulfillment/qa/aurora_postgres/cluster_master_username",
+    "password": "/ceptesok/fulfillment/qa/aurora_postgres/cluster_master_password",
+    "databaseName": "destination_db"
   },
   "S3Log": true
 }
