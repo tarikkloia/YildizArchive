@@ -658,7 +658,7 @@ func main() {
 	//		//Key:  "abc",
 	//	},
 	//	Slack: Slack{
-	//		Url:     "https://hooks.slack.com/services/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",
+	//		Url:     "https://hooks.slack.com/services/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",
 	//		Channel: "new-channel",
 	//	},
 	//	Connection: Connection{
@@ -670,6 +670,5 @@ func main() {
 	//	},
 	//	S3Log: true,
 	//}
-	//5 destination_db order_archive_daily.sql order_archive_daily
 	//handler(context.Background(), event)
 }
