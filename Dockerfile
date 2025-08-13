@@ -1,0 +1,28 @@
+# Stage 1: Derleme
+FROM amazonlinux:2 AS builder
+
+RUN yum install -y tar gzip git wget gcc zip
+
+ENV GO_VERSION=1.20.14
+RUN wget https://go.dev/dl/go1.23.0.linux-amd64.tar.gz && \
+    tar -C /usr/local -xzf go1.23.0.linux-amd64.tar.gz
+
+
+ENV PATH=$PATH:/usr/local/go/bin
+
+WORKDIR /app
+
+COPY . .
+
+RUN GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o bootstrap main.go && \
+    chmod +x bootstrap && \
+    zip function.zip bootstrap
+
+# --------------------------------------------
+
+# Stage 2: Çıktıyı taşıyan dummy image
+FROM scratch AS output
+COPY --from=builder /app/function.zip /function.zip
+
+# Eklenen satır: Dummy komut — sadece container oluşturmak için yeterli
+CMD ["echo", "This image only contains the built ZIP file."]
