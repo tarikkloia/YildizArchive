@@ -1,4 +1,3 @@
-# Stage 1: Derleme
 FROM amazonlinux:2 AS builder
 
 RUN yum install -y tar gzip git wget gcc zip
@@ -18,11 +17,7 @@ RUN GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o bootstrap main.go && \
     chmod +x bootstrap && \
     zip function.zip bootstrap
 
-# --------------------------------------------
-
-# Stage 2: Çıktıyı taşıyan dummy image
 FROM scratch AS output
 COPY --from=builder /app/function.zip /function.zip
 
-# Eklenen satır: Dummy komut — sadece container oluşturmak için yeterli
 CMD ["echo", "This image only contains the built ZIP file."]
