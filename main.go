@@ -101,7 +101,6 @@ func NewFileLogger(name string, i int, parallel int, tm string, lb int, up int, 
 		return nil, err
 	}
 	logs.File = f.Name()
-
 	return &FileLogger{
 		tmpFile:  f,
 		i:        i,
