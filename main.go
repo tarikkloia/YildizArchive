@@ -6,14 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/aws/aws-lambda-go/lambda"
-	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/config"
-	"github.com/aws/aws-sdk-go-v2/service/s3"
-	"github.com/aws/aws-sdk-go-v2/service/ssm"
-	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgconn"
-	_ "github.com/lib/pq"
 	"io"
 	"log"
 	"net/http"
@@ -24,6 +16,15 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/aws/aws-lambda-go/lambda"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/aws/aws-sdk-go-v2/service/ssm"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
+	_ "github.com/lib/pq"
 )
 
 var totalCount int
@@ -343,7 +344,6 @@ func getSqlFromS3(ctx context.Context, event *Event) (string, error) {
 }
 
 func runParallelSQL(ctx context.Context, connStr string, sql string, event *Event) (string, error) {
-
 	tm := time.Now().Format("20060102T150405") + fmt.Sprintf("%03d", time.Now().Nanosecond()/1e6)
 	var wg sync.WaitGroup
 
