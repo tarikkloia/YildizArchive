@@ -89,3 +89,4 @@ awslocal s3 ls s3://scripts/ --recursive
 awslocal s3 ls s3://logs/ --recursive
 
 awslocal s3 rm s3://logs/ --recursive
+awslocal s3 rb s3://logs/ 
