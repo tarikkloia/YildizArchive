@@ -9,7 +9,7 @@ powershell -Command "Compress-Archive -Path output\bootstrap -DestinationPath .\
 
 zip function.zip bootstrap
 
-awslocal lambda create-function --function-name localstack-lambda-url-example --runtime provided.al2 --zip-file fileb://function.zip --handler bootstrap --role arn:aws:iam::000000000000:role/lambda-role --region us-east-1 --environment Variables="{AWS_USE_PATH_STYLE=true,AWS_ENDPOINT_URL=http://host.docker.internal:4566}"
+awslocal lambda create-function --function-name test-go-lambda --runtime provided.al2 --zip-file fileb://function.zip --handler bootstrap --role arn:aws:iam::000000000000:role/lambda-role --region us-east-1 --environment Variables="{AWS_USE_PATH_STYLE=true,AWS_ENDPOINT_URL=http://host.docker.internal:4566}"
 
 
 $output = awslocal lambda invoke --function-name test-go-lambda --cli-binary-format raw-in-base64-out  --payload file://payload.json output.txt; Get-Content output.txt

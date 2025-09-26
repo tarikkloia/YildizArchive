@@ -299,14 +299,19 @@ func loadAwsConfig(ctx context.Context) {
 
 func getS3Client(ctx context.Context) (*s3.Client, error) {
 	s3Client := s3.NewFromConfig(awsCfg.config, func(o *s3.Options) {
-		o.EndpointResolver = s3.EndpointResolverFromURL(awsCfg.endpoint)
-		o.UsePathStyle = awsCfg.usePathStyle
+		if awsCfg.endpoint != "" {
+			o.EndpointResolver = s3.EndpointResolverFromURL(awsCfg.endpoint)
+			o.UsePathStyle = awsCfg.usePathStyle
+		}
 	})
+
 	return s3Client, nil
 }
 func getssmClient(ctx context.Context) (*ssm.Client, error) {
 	ssmClient := ssm.NewFromConfig(awsCfg.config, func(o *ssm.Options) {
-		o.EndpointResolver = ssm.EndpointResolverFromURL(awsCfg.endpoint)
+		if awsCfg.endpoint != "" {
+			o.EndpointResolver = ssm.EndpointResolverFromURL(awsCfg.endpoint)
+		}
 	})
 	return ssmClient, nil
 }
