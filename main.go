@@ -153,6 +153,13 @@ func (s *Service) PrintlnWithTime(txt string) {
 	}
 
 }
+func Fatalf(format string, v ...any) {
+	err := notify(errors.New(format), nil)
+	if err != nil {
+		log.Fatalf("Notification error", err)
+	}
+	log.Fatalf(format, v)
+}
 func (s *Service) Printf(format string, v ...any) {
 	if s != nil {
 		s.logger.Logf(format, v)
@@ -229,7 +236,12 @@ func (e *Event) Init() error {
 	return nil
 
 }
-func handler(ctx context.Context, event Event) (string, error) {
+
+var event *Event
+var warn error
+
+func handler(ctx context.Context, handlerEvent Event) (string, error) {
+	event = &handlerEvent
 	loadAwsConfig(ctx)
 	ssmClient, _ := getssmClient(ctx)
 	event.Connection.Host = getParameter(ctx, ssmClient, event.Connection.Host, true, event.Connection.Force)
@@ -249,7 +261,7 @@ func handler(ctx context.Context, event Event) (string, error) {
 		event.Parallel = 10
 	}
 
-	sqlBlock, err := getSqlFromS3(ctx, &event)
+	sqlBlock, err := getSqlFromS3(ctx, event)
 	if err != nil {
 		log.Println(fmt.Sprintf("Cannot get sql from %s", event.SqlFile))
 		log.Println(err.Error())
@@ -260,8 +272,12 @@ func handler(ctx context.Context, event Event) (string, error) {
 	connStr := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
 		event.Connection.Host, event.Connection.Port, event.Connection.User, event.Connection.Password, event.Connection.DatabaseName)
 
-	_, err = runParallelSQL(ctx, connStr, sqlBlock, &event)
+	_, err = runParallelSQL(ctx, connStr, sqlBlock, event)
 	if err != nil {
+		err := notify(err, nil)
+		if err != nil {
+			return "", nil
+		}
 		return "", nil
 	}
 
@@ -275,10 +291,11 @@ func getParameter(ctx context.Context, client *ssm.Client, name string, decrypt 
 	})
 	if err != nil {
 		if force {
-			log.Printf("Warning : Failed to get parameter %s: %v", name, err)
+			warn = fmt.Errorf("Warning: Failed to get parameter %s: %v", name, err)
+			log.Println(warn)
 			return name
 		} else {
-			log.Fatalf("Error : Failed to get parameter %s: %v", name, err)
+			Fatalf("Error : Failed to get parameter %s: %v", name, err)
 		}
 
 	}
@@ -290,7 +307,7 @@ func loadAwsConfig(ctx context.Context) {
 
 	awsCfg.config, errcfg = config.LoadDefaultConfig(ctx)
 	if errcfg != nil {
-		log.Fatalf("Error : Failed to load aws parameter : %v", errcfg)
+		Fatalf("Error : Failed to load aws parameter : %v", errcfg)
 	}
 	awsCfg.endpoint = os.Getenv("AWS_ENDPOINT_URL")
 	awsCfg.usePathStyle, _ = strconv.ParseBool(os.Getenv("AWS_USE_PATH_STYLE"))
@@ -361,6 +378,7 @@ func runParallelSQL(ctx context.Context, connStr string, sql string, event *Even
 	lb := 0
 	logFiles := make([]string, 0)
 	Log := make([]LogStatus, event.Parallel)
+	errCh := make(chan error, event.Parallel)
 	for i := 0; i < event.Parallel; i++ {
 		extra := 0
 		if i < remainder {
@@ -372,6 +390,7 @@ func runParallelSQL(ctx context.Context, connStr string, sql string, event *Even
 		logFiles = append(logFiles, logFile)
 
 		wg.Add(1)
+
 		go func(lb, up int, logFile string) {
 			defer wg.Done()
 
@@ -380,7 +399,9 @@ func runParallelSQL(ctx context.Context, connStr string, sql string, event *Even
 			if event.S3Log {
 				logger, err := NewFileLogger(event.Name, i, event.Parallel, tm, lb, up, &Log[i])
 				if err != nil {
-					log.Fatalf("[Worker %d-%d] Temp file error: %v", lb, up, err)
+					e := fmt.Errorf("[Worker %d-%d] Temp file error: %v", lb, up, err)
+					log.Println(e)
+					errCh <- e
 				}
 				logService = NewService(logger)
 			}
@@ -389,7 +410,9 @@ func runParallelSQL(ctx context.Context, connStr string, sql string, event *Even
 
 			parseConfig, err := pgx.ParseConfig(connStr)
 			if err != nil {
-				log.Fatalf("parseConfig parse failed: %v", err)
+				e := fmt.Errorf("parseConfig parse failed: %v", err)
+				log.Println(e)
+				errCh <- e
 			}
 			parseConfig.RuntimeParams["client_min_messages"] = "info"
 			parseConfig.Config.OnNotice = func(c *pgconn.PgConn, n *pgconn.Notice) {
@@ -422,7 +445,10 @@ func runParallelSQL(ctx context.Context, connStr string, sql string, event *Even
 
 			conn, err := pgx.ConnectConfig(ctx, parseConfig)
 			if err != nil {
-				log.Fatal("connect:", err)
+				e := fmt.Errorf("error in %w", err)
+				log.Println(e)
+				errCh <- e
+				return
 			}
 			defer func(conn *pgx.Conn, ctx context.Context) {
 				err := conn.Close(ctx)
@@ -461,26 +487,42 @@ func runParallelSQL(ctx context.Context, connStr string, sql string, event *Even
 		}
 		event.LogBucket.Key = fmt.Sprintf("%s%s_%d_%s.log", prefix, event.Name, total, tm)
 		if err := uploadToS3FromFile(ctx, event, file.Name()); err != nil {
-			log.Printf("upload error: %v", err)
+			warn = fmt.Errorf("Warning: %w", err)
+			log.Println(warn)
+
 		}
 	}
-	err := notify(event)
+	err := notify(nil, errCh, warn)
 	if err != nil {
 		return "", err
 	}
 	return mergedLog, nil
 }
 
-func notify(event *Event) error {
-
+func notify(errs error, errCh chan<- error, warns ...error) error {
+	var mark string
+	var status string
+	switch {
+	case len(warns) > 0 && warns[0] != nil:
+		mark = ":warning:"
+		status = "Warning"
+		break
+	case errs != nil || len(errCh) > 0:
+		mark = ":x:"
+		status = "Failed"
+		break
+	default:
+		mark = ":white_check_mark:"
+		status = "Success"
+	}
 	fallback := fmt.Sprintf(
-		"Archive for [%s]\nStatus : %s\nDuration : %s\n\nParallel : %d\nDatabase : %s", event.Name,
-		"Success", maxDuration.String(), event.Parallel, event.Connection.Host)
+		"Archive for [%s]\nStatus : %s\nDuration : %s\n\nParallel : %d\nDatabase : %s\nHost : %s", event.Name,
+		status, maxDuration.String(), event.Parallel, event.Connection.DatabaseName, event.Connection.Host)
 
 	attachment := Attachment{
 		MrkdwnIn: []string{"text", "fallback"},
 		Fallback: fallback,
-		Title:    fmt.Sprintf("Archive Summary   :white_check_mark:"),
+		Title:    fmt.Sprintf("Archive Summary %s", mark),
 		Text:     fallback,
 		Color:    "#00b300",
 		Footer:   "Source Time",
@@ -508,7 +550,9 @@ func notify(event *Event) error {
 	if resp.StatusCode != http.StatusOK {
 		return fmt.Errorf("Slack API error: %s", resp.Status)
 	}
-
+	if err != nil {
+		log.Fatalf("Error :%s", errs)
+	}
 	return nil
 }
 func getTempFilename(name string, tm string, lb int, up int) string {
@@ -527,7 +571,7 @@ func mergeLog(name string, tm string, logs *[]LogStatus, s3log bool) *os.File {
 	if s3log {
 		tmpfile, err = os.CreateTemp("", fmt.Sprintf("%s.log", tmp))
 		if err != nil {
-			log.Fatalf("Temp file error: %v", err)
+			Fatalf("Temp file error: %v", err)
 		}
 		defer func(name string) {
 			err := tmpfile.Close()
@@ -657,14 +701,12 @@ func main() {
 	//	LogPrefix: "order_archive_daily",
 	//	SqlBucket: Bucket{
 	//		Name: "scripts",
-	//		//Key:  "zzz",
 	//	},
 	//	LogBucket: Bucket{
-	//		Name: "logs",
-	//		//Key:  "abc",
+	//		Name: "logsx",
 	//	},
 	//	Slack: Slack{
-	//		Url:     "https://hooks.slack.com/services/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",
+	//		Url:     "https://hooks.slack.com/services/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",
 	//		Channel: "new-channel",
 	//	},
 	//	Connection: Connection{
