@@ -9,7 +9,7 @@
     "name": "logs"
   },
   "slack": {
-    "url": "https://hooks.slack.com/services/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",
+    "url": "https://hooks.slack.com/services/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",
     "channel": "new-channel"
   },
   "connection": {
