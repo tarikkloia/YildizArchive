@@ -706,7 +706,7 @@ func main() {
 	//		Name: "logsx",
 	//	},
 	//	Slack: Slack{
-	//		Url:     "https://hooks.slack.com/services/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",
+	//		Url:     "webhook_url",
 	//		Channel: "new-channel",
 	//	},
 	//	Connection: Connection{
