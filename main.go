@@ -94,7 +94,6 @@ func (f FileLogger) Log(message string) {
 	}
 	log.Println(cmsg)
 }
-
 func NewFileLogger(name string, i int, parallel int, tm string, lb int, up int, logs *LogStatus) (*FileLogger, error) {
 	f, err := os.CreateTemp("", getTempFilename(name, tm, lb, up))
 	if err != nil {
