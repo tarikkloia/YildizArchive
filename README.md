@@ -83,9 +83,6 @@ awslocal s3 mb s3://scripts --region us-east-1
 awslocal s3 mb s3://logs --region us-east-1
 
 awslocal s3api put-object --bucket scripts --key scripts/order_archive_daily.sql --body "C:\Workspace\Docker\cron\order_archive_daily.sql"
-awslocal s3api put-object --bucket scripts --key scripts/order_archive_daily.sql --body "C:\Workspace\Docker\cron\vacuum.sql"
-awslocal s3api put-object --bucket scripts --key scripts/order_archive_daily.sql --body "C:\Workspace\Docker\cron\transaction.sql"
-awslocal s3api put-object --bucket scripts --key scripts/order_archive_daily.sql --body "C:\Workspace\Docker\cron\daily_status.sql"
 
 
 awslocal s3 ls s3://scripts/ --recursive
