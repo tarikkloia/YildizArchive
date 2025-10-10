@@ -93,6 +93,7 @@ func (f FileLogger) Log(message string) {
 		cmsg = fmt.Sprintf(": Batch %d/%d : %s", f.i+1, f.parallel, message)
 	}
 	log.Println(cmsg)
+
 }
 func NewFileLogger(name string, i int, parallel int, tm string, lb int, up int, logs *LogStatus) (*FileLogger, error) {
 	f, err := os.CreateTemp("", getTempFilename(name, tm, lb, up))
