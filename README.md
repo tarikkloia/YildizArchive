@@ -9,12 +9,14 @@ powershell -Command "Compress-Archive -Path output\bootstrap -DestinationPath .\
 
 zip function.zip bootstrap
 
-awslocal lambda create-function --function-name localstack-lambda-url-example --runtime provided.al2 --zip-file fileb://function.zip --handler bootstrap --role arn:aws:iam::000000000000:role/lambda-role --region us-east-1 --environment Variables="{AWS_USE_PATH_STYLE=true,AWS_ENDPOINT_URL=http://host.docker.internal:4566}"
+awslocal lambda create-function --function-name localstack-lambda-url-example --runtime provided.al2 --zip-file fileb://function.zip --handler bootstrap --role arn:aws:iam::000000000000:role/lambda-role --region us-east-1
 
 
-$output = awslocal lambda invoke --function-name test-go-lambda --cli-binary-format raw-in-base64-out  --payload file://payload.json output.txt; Get-Content output.txt
+awslocal lambda invoke --function-name localstack-lambda-url-example ./out.txt
 
-awslocal lambda update-function-configuration --function-name test-go-lambda --environment "Variables={AWS_USE_PATH_STYLE=true,AWS_ENDPOINT_URL=http://host.docker.internal:4566}"
+$output = awslocal lambda invoke --function-name test-go-lambda output.txt;Get-Content output.txt
+$output = awslocal lambda invoke --function-name test-go-lambda --payload "{\"args\": [\"5\", \"destination_db\", \"order_archive_daily.sql\", \"order_archive_daily\"]}"  output.txt;Get-Content output.txt
+$output = awslocal lambda invoke --function-name test-go-lambda --cli-binary-format raw-in-base64-out --payload file://payload.json output.txt; Get-Content output.txt
 
 
 
@@ -68,24 +70,3 @@ awslocal events list-targets-by-rule --rule DailyLambdaFunction
 
 awslocal events remove-targets --rule DailyLambdaFunction --ids "1"
 awslocal events delete-rule --name DailyLambdaFunction
-
-
-
-
-
-awslocal ssm put-parameter --name "/ceptesok/fulfillment/qa/aurora_postgres/cluster_endpoint" --value "host.docker.internal" --type SecureString --overwrite
-awslocal ssm put-parameter --name "/ceptesok/fulfillment/qa/aurora_postgres/cluster_port" --value "5432" --type SecureString --overwrite
-awslocal ssm put-parameter --name "/ceptesok/fulfillment/qa/aurora_postgres/cluster_master_username" --value "postgres" --type SecureString --overwrite
-awslocal ssm put-parameter --name "/ceptesok/fulfillment/qa/aurora_postgres/cluster_master_password" --value "1" --type SecureString --overwrite
-
-
-awslocal s3 mb s3://scripts --region us-east-1
-awslocal s3 mb s3://logs --region us-east-1
-
-awslocal s3api put-object --bucket scripts --key scripts/order_archive_daily.sql --body "C:\Workspace\Docker\cron\order_archive_daily.sql"
-
-
-awslocal s3 ls s3://scripts/ --recursive
-awslocal s3 ls s3://logs/ --recursive
-
-awslocal s3 rm s3://logs/ --recursive
