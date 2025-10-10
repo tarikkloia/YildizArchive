@@ -1,4 +1,0 @@
-{
-  "Name": "DailyLambdaFunction",
-  "ScheduleExpression": "rate(2 minutes)"
-}
