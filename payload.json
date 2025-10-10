@@ -1,0 +1,23 @@
+{
+  "parallel": 10,
+  "sqlFile": "order_archive_daily.sql",
+  "logPrefix": "order_archive_daily",
+  "sqlBucket": {
+    "name": "scripts"
+  },
+  "logBucket": {
+    "name": "logs"
+  },
+  "slack": {
+    "url": "webhook_url",
+    "channel": "new-channel"
+  },
+  "connection": {
+    "host": "/ceptesok/fulfillment/qa/aurora_postgres/cluster_endpoint",
+    "port": "/ceptesok/fulfillment/qa/aurora_postgres/cluster_port",
+    "user": "/ceptesok/fulfillment/qa/aurora_postgres/cluster_master_username",
+    "password": "/ceptesok/fulfillment/qa/aurora_postgres/cluster_master_password",
+    "databaseName": "destination_db"
+  },
+  "S3Log": true
+}

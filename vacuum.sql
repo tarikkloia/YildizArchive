@@ -1,0 +1,1 @@
+vacuum (analyze on, verbose ON, freeze on, parallel 6);
