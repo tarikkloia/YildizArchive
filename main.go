@@ -105,6 +105,7 @@ func NewFileLogger(name string, i int, parallel int, tm string, lb int, up int, 
 		i:        i,
 		parallel: parallel,
 	}, nil
+
 }
 func (f FileLogger) Logf(format string, v ...any) {
 	message := fmt.Sprintf(format, v)
