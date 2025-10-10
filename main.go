@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
@@ -617,7 +616,7 @@ func uploadToS3FromFile(ctx context.Context, event *Event, filePath string) erro
 
 func main() {
 
-	lambda.Start(handler)
+	//lambda.Start(handler)
 	//return
 	//event := Event{
 	//	Parallel:  10,
@@ -645,31 +644,31 @@ func main() {
 	//	},
 	//	S3Log: true,
 	//}
-	//event := Event{
-	//	Parallel:  10,
-	//	SqlFile:   "order_archive_daily.sql",
-	//	LogPrefix: "order_archive_daily",
-	//	SqlBucket: Bucket{
-	//		Name: "scripts",
-	//		//Key:  "zzz",
-	//	},
-	//	LogBucket: Bucket{
-	//		Name: "logs",
-	//		//Key:  "abc",
-	//	},
-	//	Slack: Slack{
-	//		Url:     "https://hooks.slack.com/services/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",
-	//		Channel: "new-channel",
-	//	},
-	//	Connection: Connection{
-	//		Host:         "/ceptesok/fulfillment/qa/aurora_postgres/cluster_endpoint",
-	//		Port:         "/ceptesok/fulfillment/qa/aurora_postgres/cluster_port",
-	//		User:         "/ceptesok/fulfillment/qa/aurora_postgres/cluster_master_username",
-	//		Password:     "/ceptesok/fulfillment/qa/aurora_postgres/cluster_master_password",
-	//		DatabaseName: "destination_db",
-	//	},
-	//	S3Log: true,
-	//}
+	event := Event{
+		Parallel:  10,
+		SqlFile:   "order_archive_daily.sql",
+		LogPrefix: "order_archive_daily",
+		SqlBucket: Bucket{
+			Name: "scripts",
+			//Key:  "zzz",
+		},
+		LogBucket: Bucket{
+			Name: "logs",
+			//Key:  "abc",
+		},
+		Slack: Slack{
+			Url:     "https://hooks.slack.com/services/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",
+			Channel: "new-channel",
+		},
+		Connection: Connection{
+			Host:         "/ceptesok/fulfillment/qa/aurora_postgres/cluster_endpoint",
+			Port:         "/ceptesok/fulfillment/qa/aurora_postgres/cluster_port",
+			User:         "/ceptesok/fulfillment/qa/aurora_postgres/cluster_master_username",
+			Password:     "/ceptesok/fulfillment/qa/aurora_postgres/cluster_master_password",
+			DatabaseName: "destination_db",
+		},
+		S3Log: true,
+	}
 	//5 destination_db order_archive_daily.sql order_archive_daily
-	//handler(context.Background(), event)
+	handler(context.Background(), event)
 }
