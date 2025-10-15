@@ -457,7 +457,7 @@ func runParallelSQL(ctx context.Context, connStr string, sql string, event *Even
 				}
 			}(conn, ctx)
 
-			_, err = conn.Exec(ctx, "set time zone 'Europe/Istanbul';")
+			_, err = conn.Exec(ctx, "set time zone 'Europe/Istanbul';set enable_seqscan=off;")
 			if err != nil {
 				return
 			}
@@ -516,8 +516,8 @@ func notify(errs error, errCh chan<- error, warns ...error) error {
 		status = "Success"
 	}
 	fallback := fmt.Sprintf(
-		"Archive for [%s]\nStatus : %s\nDuration : %s\n\nParallel : %d\nDatabase : %s\nHost : %s", event.Name,
-		status, maxDuration.String(), event.Parallel, event.Connection.DatabaseName, event.Connection.Host)
+		"Archive for [%s]\nStatus : %s\nTotal Count : %d\nDuration : %s\n\nParallel : %d\nDatabase : %s\nHost : %s", event.Name,
+		status, totalCount, maxDuration.String(), event.Parallel, event.Connection.DatabaseName, event.Connection.Host)
 
 	attachment := Attachment{
 		MrkdwnIn: []string{"text", "fallback"},
