@@ -457,7 +457,7 @@ func runParallelSQL(ctx context.Context, connStr string, sql string, event *Even
 				}
 			}(conn, ctx)
 
-			_, err = conn.Exec(ctx, "set time zone 'Europe/Istanbul';set enable_seqscan=off;")
+			_, err = conn.Exec(ctx, "set time zone 'Europe/Istanbul';")
 			if err != nil {
 				return
 			}
